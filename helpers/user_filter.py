@@ -1,6 +1,12 @@
 import pandas as pd
 from helpers.output import printMenuOptions, showSuggestion
-from helpers.utils import coloredInput, errorMessage, getChoice, printHeading
+from helpers.utils import (
+    coloredInput,
+    errorMessage,
+    getChoice,
+    infoMessage,
+    printHeading,
+)
 
 basicModifyMenu = ["Back", "Remove rows", "Remove all rows with 'Email-match=no'"]
 suggestionMenu = ["Add from suggestions"]
@@ -43,8 +49,8 @@ def getRowNos(input_str: str, valid_range: range):
 
 
 def printCurrentState(df: pd.DataFrame, suggestions_df: pd.DataFrame):
-    printHeading("CURRENT LIST")
-    print(df)
+    printHeading("CURRENT LIST", color="green-bg")
+    print(df.to_markdown())
     showSuggestion(suggestions_df)
     print("\n")
 
@@ -57,9 +63,9 @@ def show_modifying_rows(df: pd.DataFrame, indexes: list, modify_type: str):
         return
 
     if modify_type == "add":
-        print("\Adding....")
+        infoMessage("Adding....")
     else:
-        print("\nRemoving....")
+        infoMessage("\nRemoving....")
 
     print(items)
     print("-" * 45)

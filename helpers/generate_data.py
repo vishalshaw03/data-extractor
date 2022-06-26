@@ -1,13 +1,19 @@
 import pandas as pd
 from config.constants import REFERENCE_DATA_FILE
 from helpers.output import printDataFrame, saveFile
-from helpers.utils import coloredInput, checkFilePath, errorMessage, reset_index
+from helpers.utils import (
+    coloredInput,
+    checkFilePath,
+    errorMessage,
+    infoMessage,
+    reset_index,
+)
 
 
 def printInstructions():
     print("")
     print("-" * 30, end="")
-    print(
+    infoMessage(
         "\n1. Enter '-1' anytime to exit\n2. You can also use column no as input like 1, 2"
     )
     print("-" * 30)
@@ -70,7 +76,7 @@ def read_field_names(input_df: pd.DataFrame, output_fields: list = []):
     printInstructions()
 
     input_df_columns = input_df.columns.to_list()
-    print("\nAvailable Columns")
+    infoMessage("\n--Available Columns--")
     print(input_df_columns, end="\n\n")
 
     if len(output_fields) > 0:
@@ -83,7 +89,7 @@ def read_field_names(input_df: pd.DataFrame, output_fields: list = []):
     output_field_names = output_fields
 
     if input_field_only:
-        print("\n--You can use 'Enter' for default--\n")
+        infoMessage("\n--You can use 'Enter' for default--\n")
 
         for field_name in output_field_names:
             msg = "\nEnter input field-name for {} (default {}) : ".format(
@@ -101,7 +107,7 @@ def read_field_names(input_df: pd.DataFrame, output_fields: list = []):
 
             input_field_names.append(name)
 
-            print("{} ----> {}\n".format(name, field_name))
+            infoMessage("{} ----> {}\n".format(name, field_name))
 
     else:
         for i in range(0, n):
@@ -120,7 +126,7 @@ def read_field_names(input_df: pd.DataFrame, output_fields: list = []):
             input_field_names.append(input_field_name)
             output_field_names.append(output_field_name)
 
-            print("{} ----> {}\n".format(input_field_name, output_field_name))
+            infoMessage("{} ----> {}\n".format(input_field_name, output_field_name))
 
     return (
         input_field_names,

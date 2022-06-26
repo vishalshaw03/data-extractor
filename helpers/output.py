@@ -1,5 +1,12 @@
 import pandas as pd
-from helpers.utils import coloredInput, checkFilePath, errorMessage, getChoice
+from helpers.utils import (
+    coloredInput,
+    checkFilePath,
+    errorMessage,
+    getChoice,
+    infoMessage,
+    successMessage,
+)
 
 printDataMenu = ["Default", "Long", "Back"]
 
@@ -47,11 +54,11 @@ def saveFile(df: pd.DataFrame, file_path: str = None):
     # saving the excel
     df.to_excel(r"{}".format(output_file_path))
 
-    print("DataFrame is written to Excel File successfully.")
+    successMessage("DataFrame is written to Excel File successfully.")
 
 
 def showSuggestion(suggestions_df: pd.DataFrame):
     if not suggestions_df.empty:
         print("--" * 50)
-        print("--Suggestions--")
+        infoMessage("\n--Suggestions--")
         print(suggestions_df.to_markdown())

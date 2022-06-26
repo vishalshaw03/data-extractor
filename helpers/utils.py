@@ -1,13 +1,26 @@
 import pandas as pd
 
+from helpers.colors import COLORS, NORMAL_TEXT, INPUT_TEXT
+
+
+# color-utils
+
+
+def getColorCode(color_name: str):
+    if color_name in COLORS.keys():
+        return COLORS[color_name]
+
+    return COLORS["white"]
+
+
 # input-utils
 
 
 def coloredInput(message: str):
     print(message, end="")
-    print("\033[1;36;40m", end="")
+    print("{}".format(INPUT_TEXT), end="")
     res = input()
-    print("\033[0;37;40m", end="")
+    print("{}".format(NORMAL_TEXT), end="")
 
     return res
 
@@ -15,28 +28,42 @@ def coloredInput(message: str):
 # output-utils
 
 
-def warnRefData(path: str):
-    print("\n\033[1;33;40m Note:\033[0;37;40m", end=" ")
-    print("| Using reference data from", end="")
-    print("\033[1;32;40m {} \033[0;37;40m\n".format(path))
+def coloredOutput(message: str, color: str):
+    print("{}{}{}".format(getColorCode(color), message, NORMAL_TEXT))
 
 
-def exitMessage():
-    green = "\033[1;32;40m"
-    normal = "\033[0;37;40m"
-    print("\n{}Thank you! {}".format(green, normal))
+def infoMessage(message: str):
+    print("{}{}{}\n".format(COLORS["cyan"], message, NORMAL_TEXT))
+
+
+def warningMessage(message: str):
+    print("{}{}{}\n".format(COLORS["yellow"], message, NORMAL_TEXT))
+
+
+def successMessage(message: str):
+    print("{}{}{}\n".format(COLORS["green"], message, NORMAL_TEXT))
 
 
 def errorMessage(message: str):
-    print("\033[1;31;40m{}\033[0;37;40m\n".format(message))
+    print("{}{}{}\n".format(COLORS["red"], message, NORMAL_TEXT))
 
 
-def printHeading(title: str):
+def printHeading(title: str, color: str):
     print("")
     print("\t" * 4, end="")
     print("-" * 5, end="")
-    print("\033[1;37;42m  {}  \033[0;37;40m".format(title.upper()), end="")
+    print("{}  {}  {}".format(getColorCode(color), title.upper(), NORMAL_TEXT), end="")
     print("-" * 5, end="\n\n")
+
+
+def warnRefData(path: str):
+    print("\n{} Note:{}".format(COLORS["yellow"], NORMAL_TEXT), end=" ")
+    print("| Using reference data from", end="")
+    print("{} {} {}\n".format(COLORS["green"], path, NORMAL_TEXT))
+
+
+def exitMessage():
+    print("\n{}Thank you! {}".format(COLORS["green"], NORMAL_TEXT))
 
 
 # other-utils

@@ -34,8 +34,10 @@ def readData():
 
 def readInstitutes():
     inst = input("Enter the Institutes (comma ',' separated) : \n")
-    temp = inst.split(",")
+    if not inst:
+        return []
 
+    temp = inst.split(",")
     institutes = list(map(lambda x: x.strip(), temp))
 
     return institutes

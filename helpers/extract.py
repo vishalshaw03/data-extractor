@@ -1,4 +1,5 @@
 import pandas as pd
+from config.constants import INSTITIUTES
 from helpers.filter import (
     filterByEmail,
     filterByInstitutes,
@@ -9,7 +10,7 @@ from helpers.generate_data import generate_data
 from helpers.input import readInstitutes
 from helpers.output import showSuggestion
 from helpers.user_filter import user_filter
-from helpers.utils import coloredInput, printHeading, reset_index
+from helpers.utils import coloredInput, infoMessage, printHeading, reset_index
 
 
 def extractData(input_df: pd.DataFrame, ref_data_df: pd.DataFrame, institutes: list):
@@ -40,7 +41,7 @@ def extractData(input_df: pd.DataFrame, ref_data_df: pd.DataFrame, institutes: l
 
     reset_index(final_df, keepIndexRow=True)
 
-    printHeading("FILTERED LIST")
+    printHeading("FILTERED LIST", color="green-bg")
     print(final_df.to_markdown())
     showSuggestion(suggestions_df)
     print("\n")
@@ -56,18 +57,23 @@ def filterByColumn(input_df: pd.DataFrame, ref_data_df: pd.DataFrame):
 
     match choice:
         case "1":
-            print("\n\t\t\t\t--FILTERED BY NAMES--\n")
+            printHeading("FILTERED BY NAMES", color="green-bg")
             print(filterByName(input_df, ref_data_df), end="\n\n")
             return
 
         case "2":
-            print("\n\t\t\t\t--FILTERED BY EMAIL--\n")
+            printHeading("FILTERED BY EMAIL", color="blue-bg")
             print(filterByEmail(input_df, ref_data_df), end="\n\n")
             return
 
         case "3":
-
-            print("\n\t\t\t\t--FILTERED BY INSTITIUTE--\n")
-
             institutes = readInstitutes()
+
+            if len(institutes) == 0:
+                infoMessage(
+                    "--Using default list of institutes--\n{}".format(INSTITIUTES)
+                )
+                institutes = INSTITIUTES
+
+            printHeading("FILTERED BY INSTITIUTE", color="yellow-bg")
             print(filterByInstitutes(input_df, institutes), end="\n\n")
