@@ -1,17 +1,50 @@
+from itertools import repeat
 import pandas as pd
 
 from helpers.utils import reset_index
 
 
-def matchNames(input_str: str, names: list, withSpace=False):
+def matchNames(input_str: str, names: list, withSpace: bool = False):
+
+    str_name = input_str.lower()
+    if not input_str.isalpha():
+        alpha_list = [i for i in str_name if i.isalpha() or i.isspace()]
+        str_name = "".join(alpha_list)
+
+    if withSpace:
+        t = list(filter(None, str_name.split(" ")))
+        str_name = " ".join(t)
+    else:
+        str_name = str_name.replace(" ", "")
+
     for i in range(0, len(names)):
-        ref_name = names[i]
+        if names[i].strip().lower() == str_name:
+            return i
 
-        str_name = input_str.lower()
-        if not withSpace:
-            str_name = str_name.replace(" ", "")
+    return -1
 
-        if ref_name in str_name:
+
+def matchTextInList(in_str: str, ref_list: list):
+    for i in range(len(ref_list)):
+        if "," in ref_list[i]:
+            if matchTextInList(in_str, ref_list[i].split(",")) != -1:
+                return i
+        if in_str.strip().lower() == ref_list[i].lower().strip():
+            return i
+
+    return -1
+
+
+def matchContact(in_no: str, ref_list: list):
+    if len(in_no) > 10 and in_no.startswith("91"):
+        in_no = in_no[2:]
+
+    for i in range(len(ref_list)):
+        ref = str(ref_list[i])
+        if "," in ref:
+            if matchContact(in_no, ref.split(",")) != -1:
+                return i
+        if in_no.strip().lower() == ref.lower().strip():
             return i
 
     return -1
@@ -35,89 +68,99 @@ def filterByInstitutes(input_df: pd.DataFrame, institutes: list):
     return filtered_df
 
 
-def filterByName(input_df: pd.DataFrame, reference_df: pd.DataFrame, matchEmail=False):
-    input_names = input_df["Name"].tolist()
-
+def filterByName(input_df: pd.DataFrame, reference_df: pd.DataFrame):
     temp = reference_df["Name"].tolist()
     ref_names = []
 
     for e in temp:
         ref_names.append(e.lower())
 
-    newList = []
+    drop_list = []
 
-    for i in range(0, len(input_names)):
+    filtered_df = input_df.reset_index(drop=True)
+    filtered_df["Ref_row_no"] = [].extend(repeat("--", len(input_df)))
 
-        idx = matchNames(input_names[i].lower(), ref_names, withSpace=True)
+    for i in range(len(filtered_df)):
 
+        idx = matchNames(filtered_df.iloc[i]["Name"], ref_names, withSpace=True)
         if idx == -1:
+            drop_list.append(i)
             continue
 
-        if not matchEmail:
-            newList.append(input_df.iloc[i])
-            continue
+        filtered_df.at[i, "Ref_row_no"] = idx
 
-        newList.append(input_df.iloc[i][["Name", "Email"]])
+    filtered_df = filtered_df.drop(drop_list)
+    reset_index(filtered_df)
 
-        if (
-            input_df.iloc[i]["Email"] == reference_df.iloc[idx]["Email_Address_1"]
-            or input_df.iloc[i]["Email"] == reference_df.iloc[idx]["Email_Address_2"]
-        ):
-            newList[-1]["Email_Match"] = "Yes"
-            newList[-1]["Roll_no"] = reference_df.iloc[idx]["Roll_no"]
-        else:
-            newList[-1]["Email_Match"] = "No"
-            newList[-1]["Roll_no"] = "--"
-
-    matched_list_df = pd.DataFrame(newList)
-
-    return matched_list_df
+    return filtered_df
 
 
-def filterByEmail(input_df: pd.DataFrame, reference_df: pd.DataFrame, withRollNo=False):
+def filterByEmail(input_df: pd.DataFrame, reference_df: pd.DataFrame):
 
-    emails = (
-        reference_df["Email_Address_1"].tolist()
-        + reference_df["Email_Address_2"].tolist()
-    )
+    emails = []
+    for e in reference_df["Email"].tolist():
+        if "," in e:
+            emails.extend(e.split(","))
+        emails.append(e)
 
     res = input_df.loc[input_df["Email"].isin(emails)]
 
-    if not withRollNo:
-        return res
+    return res
 
-    complete_matched = []
-    filtered = []
 
-    for i in range(0, len(res)):
+def filterByContact(input_df: pd.DataFrame, reference_df: pd.DataFrame):
 
-        input_st = res.iloc[i]
-        ref_st = reference_df.loc[
-            (reference_df["Email_Address_1"] == input_st["Email"])
-            | (reference_df["Email_Address_2"] == input_st["Email"])
-        ]
+    contacts = reference_df["Contact"].tolist()
+    match_list = []
 
-        t = input_st[["Name", "Email"]]
-        t["Email_Match"] = "Yes"
+    for i in range(len(input_df)):
+        if matchContact(str(input_df.iloc[i]["Contact"]), contacts) != -1:
+            match_list.append(input_df.iloc[i])
 
-        temp = matchNames(
-            input_st["Name"], [ref_st.iloc[0]["Name"].lower()], withSpace=True
-        )
+    res = pd.DataFrame(match_list)
+    return res
 
-        if temp == -1:
-            t["Name_in_ref_db"] = ref_st.iloc[0]["Name"]
-            filtered.append(t)
-        else:
-            t["Roll_no"] = ref_st.iloc[0]["Roll_no"]
-            complete_matched.append(t)
 
-    complete_matched_df = pd.DataFrame(complete_matched)
-    filtered_df = pd.DataFrame(filtered)
+def matchEmailAndContact(filtered_df: pd.DataFrame, reference_data_df: pd.DataFrame):
 
-    # print(complete_matched_df)
-    # print(filtered_df)
+    cols = filtered_df.columns
+    match_email = "Email" in cols
+    match_contact = "Contact" in cols
 
-    return complete_matched_df, filtered_df
+    new_filtered_df = filtered_df.reset_index(drop=True)
+
+    no_list = []
+    roll_list = []
+    no_list.extend(repeat("No", len(new_filtered_df)))
+    roll_list.extend(repeat("--", len(new_filtered_df)))
+
+    if match_email:
+        new_filtered_df["Email_Match"] = no_list
+
+    if match_contact:
+        new_filtered_df["Contact_Match"] = no_list
+
+    if match_contact or match_email:
+        new_filtered_df["Roll_no"] = roll_list
+
+    for i in range(len(filtered_df)):
+        st = filtered_df.iloc[i]
+        ref_st = reference_data_df.iloc[int(st["Ref_row_no"])]
+
+        if match_email and matchTextInList(st["Email"], [ref_st["Email"]]) != -1:
+            new_filtered_df.at[i, "Email_Match"] = "Yes"
+            new_filtered_df.at[i, "Roll_no"] = ref_st["Roll_no"]
+
+        if (
+            match_contact
+            and matchContact(str(st["Contact"]), [ref_st["Contact"]]) != -1
+        ):
+            new_filtered_df.at[i, "Contact_Match"] = "Yes"
+            new_filtered_df.at[i, "Roll_no"] = ref_st["Roll_no"]
+
+    reset_index(new_filtered_df)
+
+    return new_filtered_df
 
 
 def getSuggestions(
@@ -125,14 +168,33 @@ def getSuggestions(
     reference_data_df: pd.DataFrame,
     selected_data_df: pd.DataFrame,
 ):
+
+    complete_matched_df = selected_data_df[selected_data_df["Roll_no"] != "--"]
+    unselected_df = selected_data_df[selected_data_df["Roll_no"] == "--"]
+
+    selected_row_nos = selected_data_df["Row_no"]
+
     selected_indexes = selected_data_df.index.values.tolist()
     leftover = input_df.copy()
-    leftover = leftover.drop(selected_indexes)
+    leftover = leftover.drop(selected_indexes, errors="ignore")
 
-    complete_matched_df, suggestions_df = filterByEmail(
-        leftover, reference_data_df, withRollNo=True
+    email_filtered_df = filterByEmail(leftover, reference_data_df)
+    email_filtered_df = email_filtered_df.drop(selected_row_nos, errors="ignore")
+    # email_filtered_df["Email_Match"] = "Yes"
+
+    contact_filtered_df = filterByContact(leftover, reference_data_df)
+    contact_filtered_df = contact_filtered_df.drop(selected_row_nos, errors="ignore")
+    # contact_filtered_df["Contact_Match"] = "Yes"
+
+    reset_index(email_filtered_df, keepIndexRow=True)
+    reset_index(contact_filtered_df, keepIndexRow=True)
+
+    suggestions_df = pd.concat(
+        [unselected_df, email_filtered_df, contact_filtered_df], join="inner"
     )
 
-    reset_index(suggestions_df, keepIndexRow=True)
+    suggestions_df = suggestions_df.drop_duplicates()
+
+    reset_index(suggestions_df)
 
     return complete_matched_df, suggestions_df

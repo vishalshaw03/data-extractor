@@ -1,5 +1,5 @@
 import pandas as pd
-from helpers.output import printMenuOptions, showSuggestion
+from helpers.output import printList, printMenuOptions, showSuggestion
 from helpers.utils import (
     coloredInput,
     errorMessage,
@@ -50,7 +50,7 @@ def getRowNos(input_str: str, valid_range: range):
 
 def printCurrentState(df: pd.DataFrame, suggestions_df: pd.DataFrame):
     printHeading("CURRENT LIST", color="green-bg")
-    print(df.to_markdown())
+    printList(df)
     showSuggestion(suggestions_df)
     print("\n")
 
@@ -89,7 +89,7 @@ def modify_menu(cur_df: pd.DataFrame, cur_suggestions_df: pd.DataFrame):
 
         match choice:
             case "1":
-                return "exit"
+                return cur_df
 
             case "2":
                 input_str = coloredInput(
@@ -142,7 +142,7 @@ def user_filter(df: pd.DataFrame, suggestions_df: pd.DataFrame = pd.DataFrame())
     cur_df = df.copy()
     cur_suggestions_df = suggestions_df.copy()
 
-    modify_menu(cur_df, cur_suggestions_df)
+    cur_df = modify_menu(cur_df, cur_suggestions_df)
 
     if not getChoice("\nSave changes"):
         return df

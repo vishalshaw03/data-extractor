@@ -5,10 +5,11 @@ from helpers.filter import (
     filterByInstitutes,
     filterByName,
     getSuggestions,
+    matchEmailAndContact,
 )
-from helpers.generate_data import generate_data
+from helpers.generate_data import generate_data, generate_data_from_extract
 from helpers.input import readInstitutes
-from helpers.output import showSuggestion
+from helpers.output import printList, showSuggestion
 from helpers.user_filter import user_filter
 from helpers.utils import coloredInput, infoMessage, printHeading, reset_index
 
@@ -18,37 +19,31 @@ def extractData(input_df: pd.DataFrame, ref_data_df: pd.DataFrame, institutes: l
 
     filtered_df = filterByInstitutes(input_df, institutes)
 
+    reset_index(filtered_df, keepIndexRow=True)
+
     # print("\n\t\t\t--FILTERED BY INSTITIUTE--\n")
     # print(filtered_df)
 
-    filtered_df = filterByName(filtered_df, ref_data_df, matchEmail=True)
+    filtered_df = filterByName(filtered_df, ref_data_df)
 
     # print("\n\t\t\t--FILTERED BY NAMES--\n")
     # print(filtered_df)
 
-    complete_matched_df, suggestions_df = getSuggestions(
-        input_df, ref_data_df, filtered_df
-    )
+    filtered_df = matchEmailAndContact(filtered_df, ref_data_df)
 
-    # print("\n\t\t\t--FILTERED BY EMAIL--\n")
-    # print(complete_matched_df)
-    # print("--Suggestions--")
-    # print(suggestions_df)
+    # print("\n\t\t\t--MatchEmailAndContact--\n")
+    # printList(filtered_df)
 
-    final_df = filtered_df
-    if not complete_matched_df.empty:
-        final_df = pd.concat([filtered_df, complete_matched_df], join="inner")
-
-    reset_index(final_df, keepIndexRow=True)
+    final_df, suggestions_df = getSuggestions(input_df, ref_data_df, filtered_df)
 
     printHeading("FILTERED LIST", color="green-bg")
-    print(final_df.to_markdown())
+    printList(final_df)
     showSuggestion(suggestions_df)
     print("\n")
 
     final_df = user_filter(final_df, suggestions_df)
 
-    generate_data(final_df, for_extract=True, showPrintOption=False, showSaveFile=True)
+    generate_data_from_extract(final_df)
 
 
 def filterByColumn(input_df: pd.DataFrame, ref_data_df: pd.DataFrame):
@@ -58,12 +53,12 @@ def filterByColumn(input_df: pd.DataFrame, ref_data_df: pd.DataFrame):
     match choice:
         case "1":
             printHeading("FILTERED BY NAMES", color="green-bg")
-            print(filterByName(input_df, ref_data_df), end="\n\n")
+            print(filterByName(input_df, ref_data_df).to_markdown(), end="\n\n")
             return
 
         case "2":
             printHeading("FILTERED BY EMAIL", color="blue-bg")
-            print(filterByEmail(input_df, ref_data_df), end="\n\n")
+            print(filterByEmail(input_df, ref_data_df).to_markdown(), end="\n\n")
             return
 
         case "3":
@@ -76,4 +71,4 @@ def filterByColumn(input_df: pd.DataFrame, ref_data_df: pd.DataFrame):
                 institutes = INSTITIUTES
 
             printHeading("FILTERED BY INSTITIUTE", color="yellow-bg")
-            print(filterByInstitutes(input_df, institutes), end="\n\n")
+            print(filterByInstitutes(input_df, institutes).to_markdown(), end="\n\n")
