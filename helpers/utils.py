@@ -97,3 +97,31 @@ def getChoice(message: str):
         return False
 
     return True
+
+
+def row_exists(row_no: str, valid_range: range):
+    if not row_no.isdigit():
+        return False
+
+    if int(row_no) not in valid_range:
+        return False
+
+    return True
+
+
+def getRowNos(input_str: str, valid_range: range):
+    temp = input_str.split(",")
+    rows = []
+    invalid_entries = False
+
+    for e in temp:
+        trimmed = e.strip()
+        if row_exists(trimmed, valid_range):
+            rows.append(int(trimmed))
+        else:
+            invalid_entries = True
+
+    if invalid_entries:
+        errorMessage("----All invalid enteries are ignored----")
+
+    return rows

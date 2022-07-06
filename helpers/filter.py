@@ -1,5 +1,6 @@
 from itertools import repeat
 import pandas as pd
+import numpy as np
 
 from helpers.utils import reset_index
 
@@ -90,6 +91,7 @@ def filterByName(input_df: pd.DataFrame, reference_df: pd.DataFrame):
         filtered_df.at[i, "Ref_row_no"] = idx
 
     filtered_df = filtered_df.drop(drop_list)
+    filtered_df["Name_Match"] = "Yes"
     reset_index(filtered_df)
 
     return filtered_df
@@ -169,32 +171,80 @@ def getSuggestions(
     selected_data_df: pd.DataFrame,
 ):
 
+    cols = input_df.columns.tolist()
+    match_email = "Email" in cols
+    match_contact = "Contact" in cols
+    email_filtered_df = pd.DataFrame()
+    contact_filtered_df = pd.DataFrame()
+
     complete_matched_df = selected_data_df[selected_data_df["Roll_no"] != "--"]
+    complete_matched_df = complete_matched_df.sort_values("Roll_no")
+    reset_index(complete_matched_df)
+
     unselected_df = selected_data_df[selected_data_df["Roll_no"] == "--"]
 
     selected_row_nos = selected_data_df["Row_no"]
-
     selected_indexes = selected_data_df.index.values.tolist()
+
     leftover = input_df.copy()
     leftover = leftover.drop(selected_indexes, errors="ignore")
 
-    email_filtered_df = filterByEmail(leftover, reference_data_df)
-    email_filtered_df = email_filtered_df.drop(selected_row_nos, errors="ignore")
-    # email_filtered_df["Email_Match"] = "Yes"
+    if match_email:
+        email_filtered_df = filterByEmail(leftover, reference_data_df)
+        email_filtered_df = email_filtered_df.drop(selected_row_nos, errors="ignore")
+        email_filtered_df["Email_Match"] = "Yes"
 
-    contact_filtered_df = filterByContact(leftover, reference_data_df)
-    contact_filtered_df = contact_filtered_df.drop(selected_row_nos, errors="ignore")
-    # contact_filtered_df["Contact_Match"] = "Yes"
+    if match_contact:
+        contact_filtered_df = filterByContact(leftover, reference_data_df)
+        contact_filtered_df = contact_filtered_df.drop(
+            selected_row_nos, errors="ignore"
+        )
+        contact_filtered_df["Contact_Match"] = "Yes"
 
-    reset_index(email_filtered_df, keepIndexRow=True)
-    reset_index(contact_filtered_df, keepIndexRow=True)
+    if not email_filtered_df.empty:
+        reset_index(email_filtered_df, keepIndexRow=True)
 
-    suggestions_df = pd.concat(
-        [unselected_df, email_filtered_df, contact_filtered_df], join="inner"
-    )
+    if not contact_filtered_df.empty:
+        reset_index(contact_filtered_df, keepIndexRow=True)
 
+    # print("email_filtered_df")
+    # print(email_filtered_df)
+
+    # print("contact_filtered_df")
+    # print(contact_filtered_df)
+
+    merged_df = pd.DataFrame()
+
+    if not email_filtered_df.empty and not contact_filtered_df.empty:
+        cols.append("Row_no")
+        merged_df = pd.merge(
+            left=email_filtered_df,
+            right=contact_filtered_df,
+            left_on=cols,
+            right_on=cols,
+            how="left",
+        )
+    else:
+        merged_df = pd.concat([email_filtered_df, contact_filtered_df], join="inner")
+
+    if not merged_df.empty:
+        merged_df["Name_Match"] = "No"
+
+    # print("Merged_df")
+    # print(merged_df.columns.tolist())
+
+    # print("unselected_df")
+    # print(unselected_df.columns.tolist())
+
+    suggestions_df = pd.concat([unselected_df, merged_df], join="inner")
     suggestions_df = suggestions_df.drop_duplicates()
+    suggestions_df["Ref_row_no"] = "--"
+    suggestions_df["Roll_no"] = "--"
 
     reset_index(suggestions_df)
+
+    # print(suggestions_df.columns.tolist())
+    # print("--" * 30)
+    # print(complete_matched_df.columns.tolist())
 
     return complete_matched_df, suggestions_df

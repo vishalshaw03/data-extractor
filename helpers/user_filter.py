@@ -4,11 +4,12 @@ from helpers.utils import (
     coloredInput,
     errorMessage,
     getChoice,
+    getRowNos,
     infoMessage,
     printHeading,
 )
 
-basicModifyMenu = ["Back", "Remove rows", "Remove all rows with 'Email-match=no'"]
+basicModifyMenu = ["Back", "Remove rows"]
 suggestionMenu = ["Add from suggestions"]
 
 
@@ -18,34 +19,6 @@ def print_modify_menu(showSuggestionOptions):
         menu = basicModifyMenu + suggestionMenu
 
     printMenuOptions(menu)
-
-
-def row_exists(row_no: str, valid_range: range):
-    if not row_no.isdigit():
-        return False
-
-    if int(row_no) not in valid_range:
-        return False
-
-    return True
-
-
-def getRowNos(input_str: str, valid_range: range):
-    temp = input_str.split(",")
-    rows = []
-    invalid_entries = False
-
-    for e in temp:
-        trimmed = e.strip()
-        if row_exists(trimmed, valid_range):
-            rows.append(int(trimmed))
-        else:
-            invalid_entries = True
-
-    if invalid_entries:
-        errorMessage("----All invalid enteries are ignored----")
-
-    return rows
 
 
 def printCurrentState(df: pd.DataFrame, suggestions_df: pd.DataFrame):
@@ -103,10 +76,6 @@ def modify_menu(cur_df: pd.DataFrame, cur_suggestions_df: pd.DataFrame):
                 print("\nRows removed successfully!\n")
 
             case "3":
-                cur_df = cur_df[cur_df["Email_Match"] == "Yes"]
-                print("\nRows removed successfully!\n")
-
-            case "4":
                 if showSuggestionOptions:
                     input_str = coloredInput(
                         "\nEnter row nos. to be add (comma separated): "
@@ -117,7 +86,7 @@ def modify_menu(cur_df: pd.DataFrame, cur_suggestions_df: pd.DataFrame):
                     items = cur_suggestions_df.loc[
                         cur_suggestions_df.index.isin(row_nos)
                     ]
-                    items = items[["Name", "Email", "Email_Match", "Row_no"]]
+                    # items = items[["Name", "Email", "Email_Match", "Row_no"]]
                     cur_df = pd.concat([cur_df, items], ignore_index=True)
 
                     cur_suggestions_df = cur_suggestions_df.drop(row_nos)
