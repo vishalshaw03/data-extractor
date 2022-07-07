@@ -1,7 +1,5 @@
 from itertools import repeat
 import pandas as pd
-import numpy as np
-
 from helpers.utils import reset_index
 
 
@@ -207,12 +205,6 @@ def getSuggestions(
     if not contact_filtered_df.empty:
         reset_index(contact_filtered_df, keepIndexRow=True)
 
-    # print("email_filtered_df")
-    # print(email_filtered_df)
-
-    # print("contact_filtered_df")
-    # print(contact_filtered_df)
-
     merged_df = pd.DataFrame()
 
     if not email_filtered_df.empty and not contact_filtered_df.empty:
@@ -230,21 +222,11 @@ def getSuggestions(
     if not merged_df.empty:
         merged_df["Name_Match"] = "No"
 
-    # print("Merged_df")
-    # print(merged_df.columns.tolist())
-
-    # print("unselected_df")
-    # print(unselected_df.columns.tolist())
-
     suggestions_df = pd.concat([unselected_df, merged_df], join="inner")
     suggestions_df = suggestions_df.drop_duplicates()
     suggestions_df["Ref_row_no"] = "--"
     suggestions_df["Roll_no"] = "--"
 
     reset_index(suggestions_df)
-
-    # print(suggestions_df.columns.tolist())
-    # print("--" * 30)
-    # print(complete_matched_df.columns.tolist())
 
     return complete_matched_df, suggestions_df

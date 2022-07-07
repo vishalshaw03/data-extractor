@@ -7,7 +7,7 @@ from helpers.filter import (
     getSuggestions,
     matchEmailAndContact,
 )
-from helpers.generate_data import generate_data, generate_data_from_extract
+from helpers.generate_data import generate_data_from_extract
 from helpers.input import readInstitutes
 from helpers.output import printList, showSuggestion
 from helpers.user_filter import user_filter

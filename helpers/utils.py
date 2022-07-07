@@ -1,5 +1,4 @@
 import pandas as pd
-
 from helpers.colors import COLORS, NORMAL_TEXT, INPUT_TEXT
 
 
